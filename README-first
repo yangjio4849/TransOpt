@@ -1,0 +1,180 @@
+The package TransOpt makes it possible for VASP users to calculate electrical transport properties (Seebeck coefficients, electrical conductivities, and electronic thermal conductivities) by using (1) the momentum matrix method (Method 1) or (2) derivative method same as adopted in BoltzTrap (Method 2). 
+1. The advantage of Method 1 is the overcome of "band-crossing" problem, especially useful for supercell calculations. However, Method 1 cannot deal with the calculations with spin-orbital coupling.
+2. Method 2 can treat systems with/without spin-orbital coupling.
+3. In 2018, the treatment of relaxation time is implemented in the code (compatible with both Method 1 and 2). 
+The interface with Quantum Espresso is done in 2019.
+
+###########
+References:
+###########
+If you want to use this code, please refer to our work (more to be added):
+
+The original paper and the application in partially filled skutterudites:
+1. Jiong Yang, Lili Xi, Wenqing Zhang, Lidong Chen, and Jihui Yang 
+Journal of Electronic Materials 38, 1397 (2009)
+
+The introduction of constant electron-phonon coupling method for relaxation time:
+2. Lili Xi, Shanshan Pan, Xin Li, Yonglin Xu, Jianyue Ni, Xin Sun, Jiong Yang, Jun Luo, Jinyang Xi, Wenhao Zhu, Xinran Li, Di Jiang, Richard Dronskowski, Xun Shi, G. Jeffrey Snyder, and Wenqing Zhang
+Journal of American Chemical Society 140, 10785-10793 (2018)
+
+TransOpt interfaced with Quantum Espresso
+3. Changdong Liu, Jiong Yang, Jinyang Xi, and Xuezhi Ke
+Nanoscale DOI:10.1039/C9NR01734H (2019)
+
+Related papers:
+
+1. Jiong Yang, P. Qiu, R. Liu, L. Xi, S. Zheng, W. Zhang, L. Chen, D. J. Singh, and Jihui Yang
+Phys. Rev. B 84, 235205 (2011)
+
+2. Jiong Yang, R. Liu, Z. Chen, L. Xi, Jihui Yang, W. Zhang, and L. Chen
+Appl. Phys. Lett. 101, 022101 (2012)
+
+3. L. Xi, Y. B. Zhang, X. Y. Shi, J. Yang, X. Shi, L. D. Chen, W. Zhang, Jihui Yang, and D. J. Singh
+Phys. Rev. B 86, 155201 (2012)
+
+4. Zhigang Mei, Yeon Soo Kim, Abdellatif M. Yacout, Jiong Yang, Xin Li, and Yan Cao
+Materialia 4, 449 (2018)
+
+5. Ruoxi Li, Xin Li, Lili Xi, Jiong Yang, David J. Singh, and Wenqing Zhang
+ACS Applied Materials and Interfaces DOI:10.1021/acsami.9b01196 (2019)
+
+6. Xin Sun, Xin Li, Jiong Yang, Jinyang Xi, Ryky Nelson, Christina Ertural, Richard Dronskowski, Weishu Liu, Gerald J. Snyder, David J. Singh, and Wenqing Zhang
+Journal of Computational Chemistry 40, 1693 (2019)
+
+
+###########
+Input files
+###########
+1. POSCAR
+2. EIGENVAL 
+3. SYMMETRY from modified VASP (vasp.*.symm version)
+4. Files containing group velocity information:
+   GROUPVEC for Method 1 got from modified VASP (vasp.*.vk version)
+   or GVEC for Method 2 got from derivation code (derivation code runs after vasp.*.symm calculation)
+5. finale.input
+6. control.in (necessary for Method 2 but unnecessary for Method 1)
+7. OUTCAR for Method 2
+
+###########
+Interpretation of some input files
+###########
+3. SYMMETRY includes all the rotational symmetry operations (except the inversion) of the investigated systems in vasp calculation. It is written in the same format as those for Wien2k case.struct files. Officially released VASP does not generate this file at this stage, so a modified vasp.*.symm version to get the SYMMETRY file is needed. 
+4. GROUPVEC and GVEC are the electronic group velocity files from different Methods. For Method 1, currently officially released VASP version did not generate GROUPVEC, so a modified vasp.*.vk version to get the GROUPVEC file is needed. It is worth noting that the electronic group velocity written in GROUPVEC is based on a simple K-points not the full mesh K-points, so the SYMMETRY file is also needed to get the group velocities on the full k mesh. For Method 2, you can only run the vasp.*.symm version, and then run the derivation code to get the GVEC file.
+5. finale.input:  Ef Estart dE NE T CBM nsis NELE
+                  adp Youngs'modulus smearing
+   #Ef defines the zero energy position. (unit eV)      
+   #Estart defines the starting point of the energy (unit eV). For example, -3 stands for do the transport analysis from the Ef-3 eV. 
+   #dE defines the energy interval to do transport analysis. (unit eV)
+   #NE defines the number of energy points.
+   #T defines the absolute temperature. (unit K)
+   #CBM defines the band number of conduction band minimum.
+   #nsis defines the corrected energy value below CBM (not includs CBM). (unit eV) For example -0.5 stands for the value of energy below CBM of all k-points minus 0.5 eV. This is usually used for scissors approximation on band gaps.
+   #NELE defines the total number of electrons. (for evaluation of the carrier concentrations)
+   #adp defines the deformation potential. (unit eV)
+   #Youngs' modulus. (unit GPa)
+   #smearing defines the smoothness in relaxation time calculations. The larger means the smoother.
+6. control.in:    T/F (If T, use derivation to get the vk, F momentum matrix. Default F)
+                  T T T (The dimension of crystal,if is two dimension along x,y plane, please type T T F. Default T T T, i.e., 3 dimension)
+                  T/F (If T, print klist, GROUPVEC_full, and EIGENVAL_full based on the full k mesh. Defult F)
+
+
+###########
+Modifications of VASP source codes
+###########
+
+1. vasp.*.symm version
+
+In main.F, I added the following lines (please refer to the for_vasp.5.4.4/main.F for the position I made the modifications) 
+
+!added by Jiong Yang for TE calculations
+      OPEN(UNIT=38,FILE="SYMMETRY",STATUS="REPLACE")
+      WRITE(38,"(I12)")NROTK
+      DO NEDOS=1,NROTK   ! I DON'T WANT TO DEFINE A NEW INTEGER VARIABLE, SO HERE I USE NEDOS
+         WRITE(38,"(3F10.5)") IGRPOP(1,1,NEDOS)*1.0,IGRPOP(1,2,NEDOS)*1.0,IGRPOP(1,3,NEDOS)*1.0
+         WRITE(38,"(3F10.5)") IGRPOP(2,1,NEDOS)*1.0,IGRPOP(2,2,NEDOS)*1.0,IGRPOP(2,3,NEDOS)*1.0
+         WRITE(38,"(3F10.5)") IGRPOP(3,1,NEDOS)*1.0,IGRPOP(3,2,NEDOS)*1.0,IGRPOP(3,3,NEDOS)*1.0
+         WRITE(38,*)""
+      ENDDO
+      CLOSE(38)
+
+I've prepared the main.F_for_symmm compatible with vasp.4.6.34, vasp.5.3.3, and vasp.5.4.4. Simply replace the original main.F with this one.
+
+2. vasp.*.vk version for Method 1 
+
+  ##step1. vasp.*.vk version is based on vasp.*.symm version, so a SYMMETRY modification is needed first.
+
+  In main.F, I added the following lines. (please refer to the for_vasp.5.4.4/main.F for the position I made the modifications)
+  !added by Jiong Yang for TE calculations
+      OPEN(UNIT=38,FILE="SYMMETRY",STATUS="REPLACE")
+      WRITE(38,"(I12)")NROTK
+      DO NEDOS=1,NROTK   ! I DON'T WANT TO DEFINE A NEW INTEGER VARIABLE, SO HERE I USE NEDOS
+         WRITE(38,"(3F10.5)") IGRPOP(1,1,NEDOS)*1.0,IGRPOP(1,2,NEDOS)*1.0,IGRPOP(1,3,NEDOS)*1.0
+         WRITE(38,"(3F10.5)") IGRPOP(2,1,NEDOS)*1.0,IGRPOP(2,2,NEDOS)*1.0,IGRPOP(2,3,NEDOS)*1.0
+         WRITE(38,"(3F10.5)") IGRPOP(3,1,NEDOS)*1.0,IGRPOP(3,2,NEDOS)*1.0,IGRPOP(3,3,NEDOS)*1.0
+         WRITE(38,*)""
+      ENDDO
+      CLOSE(38)
+
+
+  ! added by Jiong Yang to generate GROUPVEC
+      ALLOCATE(NABIJ(WDES%NB_TOT,WDES%NB_TOT))
+           CALL GET_NABIJ(NABIJ,W,WDES,P,KPOINTS,GRID_SOFT,LATT_CUR, 
+             IO,INFO,T_INFO,NBLK,COMM,IU0,55)
+      DEALLOCATE(NABIJ)
+
+  ##step2. I created a getnabij.F, based on optics.F, to calculate < phi_i | nabla | phi_j > when i=j, i.e., the momemtum matrix element. Please simply copy the getnabij.F and main.F_for_vk to the folder where all the .F files locate. I've prepared the two files for vasp version 4.6.34, 5.3.3 and 5.4.4.
+
+For the makefile of vasp 4.6.34 and 5.3.3, just add getnabij.o at the end of "SOURCE=". Then make.
+For vasp 5.4.4, I have prepared the (hidden) .objects file in the directory, where I have added getnabij.o. Then make std.
+
+
+Important tip: 1. The spin-orbit interaction can not go with getnabij.F, thus it is not supported for vasp.*.vk.
+               2. Since the getnabij.F is from optics.F, please use PAW potentials and set NPAR=1 in INCAR as required by optic calculations of vasp.*.vk. A dense k mesh is necessary for the transport calculations. According to my expeirence, 240~300/L (L is the length of lattice vector along one particular direction). Again, the spin-orbit interaction is not supported. It will give you wrong group velocities.
+
+
+###########
+Compile and use the TransOpt
+###########
+####################################################################################################
+                                       sh omprun                    
+####################################################################################################
+
+compile:
+I have prepared TransOpt.F and its omp version TransOpt_omp.F, which significantly speed up the calculations of relaxation times. For compilation, just the following lines in omprun (only tested in intel fortran compiler 2015~2017, but I guess it might work with other morden fortran compiler):
+
+Run TransOpt:
+TransOpt is a serial program. Just type the program name.
+The omp programs need openmp. I simply type "OMP_NUM_THREADS=`grep processor /proc/cpuinfo | wc -l`" before running the TransOpt_omp. 
+
+
+###########
+Important tip:
+###########
+If the relaxation times have already been calculated, i.e., the TAU exists, the code will read the TAU first to save a lot of time.
+
+###########
+Output files:
+###########
+1. CRTA-trace-e.txt ! constant relaxation time approximation 
+2. RTA-trace-e.txt  ! if the relaxation time is calculated 
+3. CRTA-tensor-e.txt  ! constant relaxation time approximation with full tensor 
+4. RTA-tensor-e.txt  ! fulltensor with relaxation time calculated
+
+
+An example is prepared for you. Run it first. It is NbFeSb, and the results of RTA are close with experiments!
+
+
+If you have further problems or want to report a bug, please feel free to contanct me:
+Prof. Dr. Jiong Yang
+E-mail:  jiongy@t.shu.edu.cn
+Wechat:  yangjio4849
+or
+Dr. Xin Li
+E-mail:  xinli@t.shu.edu.cn
+Wechat:  cilly_lan 
+
+If you have inquiry on the interface with Quantum Espresso, please contact Dr. Jinyang Xi:
+Dr. Jinyang Xi
+E-mail:  jinyangxi@t.shu.edu.cn
+Wechat:  milano1001
+
