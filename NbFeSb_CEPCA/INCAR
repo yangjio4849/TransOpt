@@ -1,0 +1,29 @@
+SYSTEM= skutterudites
+  NWRITE=   2;  LPETIM=F  write-flag & timer
+  ISTART=   1   job   :0-new  1-cont  2-samecut
+  ICHARG=   1   charge: 1-file 2-atom 10-con
+  ENCUT = 520
+  NELM  =  140;  NELMIN=  5  # of ELM steps
+  EDIFF =1E-04  stopping-criterion for ELM
+  AMIX  =  0.1
+  BMIX  =  1.2
+  NSW   =   0   number of steps for IOM
+  EDIFFG=-1E-02  stopping-criterion for IOM
+  NBLOCK=    1;  KBLOCK=  5  inner block; outer block
+  IBRION=    -1   ionic relax: 0-MD 1-quasi-New 2-CG
+  ISIF  =    0   stress and relaxation
+  IWAVPR=    1   prediction: 0-non 1-charg 2-wave 3-comb
+  LCORR =    T   Harris-correction to forces
+  POTIM = 0.05   time-step for ion-motion
+  ISMEAR =   -1;  SIGMA  = 0.0258  broadening in eV -4-tet -1-fermi 0-gaus
+  ALGO  =  fast   algorithm
+  LDIAG  =     T   sub-space diagonalisation
+  LREAL  =     F   real-space projection(O or Auto)
+  WEIMIN = 0
+NPAR=1
+  PREC = Accurate
+  ADDGRID = .TRUE.
+#  METAGGA = SCAN
+LWAVE=.FALSE.
+LCHARG=.FALSE.
+NBANDS= 18
