@@ -1,0 +1,34 @@
+  SYSTEM= d 
+  NWRITE=   2;  LPETIM=F  write-flag & timer
+  ISTART=   1   job   :0-new  1-cont  2-samecut
+  ICHARG=   1   charge: 1-file 2-atom 10-const
+ENCUT= 400
+  LWAVE =   F
+#  LCHARG=   F
+  NELM  =  100
+  NELMIN=  4  # of ELM steps
+  EDIFF =1E-04 ping-criterion for ELM
+  AMIX  =  0.4
+  BMIX  =  1.0
+  NSW   =   0   number of steps for IOM
+  EDIFFG=-1E-04  stopping-criterion for IOM
+  NBLOCK=    1;  KBLOCK=  5  inner block; outer block
+  IBRION=    -1  ionic relax: 0-MD 1-quasi-New 2-CG
+  ISIF  =    0   stress and relaxation
+  IWAVPR=    1   prediction: 0-non 1-charg 2-wave 3-comb
+  LCORR =    T   Harris-correction to forces
+  POTIM = 0.50   time-step for ion-motion
+  ISMEAR =   -1;  SIGMA  = 0.025855  broadening in eV -4-tet -1-fermi 0-gaus
+  ALGO  =    Fast   algorithm
+  LDIAG  =     T   sub-space diagonalisation
+  LREAL  =    F   real-space projection(O or Auto)
+  WEIMIN = 0
+  PREC = Accurate
+  ADDGRID = .TRUE.
+  NPAR = 1
+LDAU=.TRUE.
+LMAXMIX=4
+LDAUL=2 2 -1
+LDAUU=4 1.9 0
+LDAUJ=0 0 0
+METAGGA = SCAN
