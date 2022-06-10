@@ -1,0 +1,7 @@
+F    !  T: derivation method for vk;  F: momentum matrix method for vk
+T T T   !  three dimensions  for each dimension, T means vk needs to be determined. F means vk=0 for this dimension
+F    !  T: output klist EIGENVAL_full;  F: not output these two files
+2    !  scattering strategies.   0: CRTA;  1:CEPCA;  2 : CEPCA+ionized impurity scattering
+3.8464 -1 0.001 1501 300 73 0 144.00  
+4.565 4.565 62 0.5     !  Edef_VB(:) ; Edef_CB(:) ;  Young's modulus; gaussian smearing factor
+1 0.1 0.1 15    !  charge state of ionized impurity; impurity concentration; carrier concentration ; relative dielectric constant

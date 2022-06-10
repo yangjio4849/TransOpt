@@ -1,0 +1,5 @@
+ifort -o derivation derivation.f90
+sed '/OMP/d' TransOpt_omp_2.0.f90 > TransOpt_2.0.f90
+sed -i '/omp/d' TransOpt_2.0.f90
+ifort -qopenmp -o TransOpt_omp_2.0 TransOpt_omp_2.0.f90
+ifort -o TransOpt_2.0 TransOpt_2.0.f90
